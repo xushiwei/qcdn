@@ -8,6 +8,8 @@
 *.so
 *.dylib
 
+.DS_Store
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -18,4 +20,4 @@
 # vendor/
 
 # Go workspace file
-go.work
+go.work*
