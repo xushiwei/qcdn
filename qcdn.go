@@ -14,13 +14,13 @@ import (
 使用样例：
 
 proxy := NewQcdnProxy()
-proxy.SetStrategy("https://example-302.com", &QcdnStrategy{
+proxy.SetStrategy("https://example-qcdn.com", &QcdnStrategy{
 	Backup: "https://example-cdn.com", // 备份域名，主域名下载失败的时候启用
 	Boot: "https://example-cdn.com", // 首开优化域名，在 MakeVodURL 传入非 0 的 bootLen 时启用
 })
 
 bootLen := 0 // 通过 Boot 域名先加载多少字节，传 0 表示不做首开优化
-url := proxy.MakeVodURL("https://example-302.com/video.mp4", bootLen)
+url := proxy.MakeVodURL("https://example-qcdn.com/video.mp4", bootLen)
 ...
 
 // ---------------------------------------------------------------------------- */
