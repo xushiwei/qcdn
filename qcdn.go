@@ -3,7 +3,6 @@ package qcdn
 import (
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -107,7 +106,6 @@ func (p *QcdnProxy) redirectOf(uri resource) (ret resource, ok bool) {
 }
 
 func (p *QcdnProxy) setRedirect(uri, to resource) {
-	log.Println("setRedirect:", uri, to)
 	p.mutex.Lock()
 	p.redirects[uri] = to
 	p.mutex.Unlock()
@@ -170,10 +168,12 @@ func (p *QcdnProxy) handle(w http.ResponseWriter, req *http.Request) {
 			last = req
 			return nil
 		}
-		if serveRequest(client, w, req) && last != nil { // 请求成功并且存在 redirect，缓存它
-			lastURL := last.URL
-			urlBase := urlBase{lastURL.Scheme, lastURL.Host}
-			p.setRedirect(uri, resource{urlBase, lastURL.Path})
+		if serveRequest(client, w, req) {
+			if last != nil { // 请求成功并且存在 redirect，缓存它
+				lastURL := last.URL
+				urlBase := urlBase{lastURL.Scheme, lastURL.Host}
+				p.setRedirect(uri, resource{urlBase, lastURL.Path})
+			}
 			return
 		}
 	}
