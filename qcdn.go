@@ -15,7 +15,9 @@ import (
 
 使用样例：
 
-proxy := NewQcdnProxy()
+proxy := NewQcdnProxy(&QcdnConfig{
+	Timeout: 0, // 请求的超时时间，0 代表不超时
+})
 proxy.SetStrategy("https://example-qcdn.com", &QcdnStrategy{
 	Backup: "https://example-cdn.com", // 备份域名，主域名下载失败的时候启用
 	Boot: "https://example-cdn.com", // 首开优化域名，在 MakeVodURL 传入非 0 的 bootLen 时启用
