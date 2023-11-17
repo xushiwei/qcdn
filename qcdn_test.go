@@ -15,7 +15,7 @@ func TestQcdn_MainOK(t *testing.T) {
 	defer echo.Close()
 	log.Println("echo.URL:", echo.URL)
 
-	proxy := NewQcdnProxy()
+	proxy := NewQcdnProxy(nil)
 	defer proxy.Close()
 
 	proxy.SetStrategy(echo.URL, &QcdnStrategy{
@@ -27,6 +27,42 @@ func TestQcdn_MainOK(t *testing.T) {
 
 	resp, err := http.Get(url)
 	checkHttpResp(t, resp, err, 200, "/hello")
+}
+
+func TestQcdn_Main302(t *testing.T) {
+	echo := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		io.WriteString(w, req.URL.Path)
+	}))
+	defer echo.Close()
+	log.Println("echo.URL:", echo.URL)
+
+	first := true
+	s302 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if first {
+			http.Redirect(w, req, echo.URL+"/302", http.StatusFound)
+			first = false
+		} else {
+			io.WriteString(w, "/unexpected")
+		}
+	}))
+	defer s302.Close()
+	log.Println("302.URL:", s302.URL)
+
+	proxy := NewQcdnProxy(nil)
+	defer proxy.Close()
+
+	proxy.SetStrategy(s302.URL, &QcdnStrategy{
+		Backup: "http://not-exist.com",
+	})
+
+	url := proxy.MakeVodURL(s302.URL+"/hello", 0)
+	log.Println("proxy.MakeVodURL:", url)
+
+	resp, err := http.Get(url)
+	checkHttpResp(t, resp, err, 200, "/302")
+
+	resp, err = http.Get(url)
+	checkHttpResp(t, resp, err, 200, "/302")
 }
 
 func TestQcdn_MainFail(t *testing.T) {
@@ -43,7 +79,7 @@ func TestQcdn_MainFail(t *testing.T) {
 	defer backup.Close()
 	log.Println("backup.URL:", backup.URL)
 
-	proxy := NewQcdnProxy()
+	proxy := NewQcdnProxy(nil)
 	defer proxy.Close()
 
 	proxy.SetStrategy(fail.URL, &QcdnStrategy{
@@ -58,6 +94,7 @@ func TestQcdn_MainFail(t *testing.T) {
 }
 
 func checkHttpResp(t *testing.T, resp *http.Response, err error, code int, body string) {
+	t.Helper()
 	if err != nil {
 		t.Fatal("proxy.MakeVodURL resp:", err)
 	}
